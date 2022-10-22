@@ -1,0 +1,27 @@
+
+ENG_MUSC.png
+size: 2048, 64
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+ENG_MUSC_FIRE_RIGHT
+  rotate: false
+  xy: 2, 5
+  size: 728, 51
+  orig: 728, 51
+  offset: 0, 0
+  index: -1
+ENG_MUSC_STAND
+  rotate: false
+  xy: 732, 6
+  size: 392, 50
+  orig: 392, 50
+  offset: 0, 0
+  index: -1
+ENG_MUSC_WALK_RIGHT
+  rotate: false
+  xy: 1126, 2
+  size: 336, 54
+  orig: 336, 54
+  offset: 0, 0
+  index: -1
