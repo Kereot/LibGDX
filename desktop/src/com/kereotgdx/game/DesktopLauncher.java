@@ -2,7 +2,6 @@ package com.kereotgdx.game;
 
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
-import com.kereotgdx.game.KereotGdxGame;
 
 // Please note that on macOS your application needs to be started with the -XstartOnFirstThread JVM argument
 public class DesktopLauncher {
@@ -12,6 +11,7 @@ public class DesktopLauncher {
 		config.setWindowedMode(1366, 768);
 		config.setAudioConfig(32,512,9);
 		config.setTitle("KereotGDX");
-		new Lwjgl3Application(new KereotGdxGame(), config);
+//		new Lwjgl3Application(new KereotGdxGame(), config);
+		new Lwjgl3Application(new Main(), config);
 	}
 }

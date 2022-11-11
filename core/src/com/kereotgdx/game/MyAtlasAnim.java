@@ -3,10 +3,12 @@ package com.kereotgdx.game;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import lombok.Getter;
 
 public class MyAtlasAnim {
     TextureAtlas atlas;
 //    Animation<TextureAtlas.AtlasRegion> anim;
+    @Getter
     Animation<TextureRegion> anim;
     private float time;
 
