@@ -3,7 +3,7 @@ package com.kereotgdx.game;
 import com.badlogic.gdx.physics.box2d.*;
 
 public class BodyPartCreator {
-
+    public final float PPM = 50;
 
     public void create(
             PsyX psyX,
@@ -33,7 +33,7 @@ public class BodyPartCreator {
                 def.type = BodyDef.BodyType.KinematicBody;
                 break;
         }
-        def.position.set(positionX, positionY);
+        def.position.set(positionX/PPM, positionY/PPM);
         shape.setAsBox(shapeX, shapeY);
         fDef.shape = shape;
         fDef.density = density;
@@ -65,7 +65,7 @@ public class BodyPartCreator {
                 def.type = BodyDef.BodyType.KinematicBody;
                 break;
         }
-        def.position.set(positionX, positionY);
+        def.position.set(positionX/PPM, positionY/PPM);
         return psyX.world.createBody(def);
     }
 
@@ -80,7 +80,7 @@ public class BodyPartCreator {
             float restitution,
             String name
     ) {
-        shape.setAsBox(shapeX, shapeY);
+        shape.setAsBox(shapeX/PPM, shapeY/PPM);
         fDef.shape = shape;
         fDef.density = density;
         fDef.friction = friction;
@@ -114,8 +114,8 @@ public class BodyPartCreator {
                 def.type = BodyDef.BodyType.KinematicBody;
                 break;
         }
-        def.position.set(positionX, positionY);
-        shape.setAsBox(shapeX, shapeY);
+        def.position.set(positionX/PPM, positionY/PPM);
+        shape.setAsBox(shapeX/PPM, shapeY/PPM);
         fDef.shape = shape;
         psyX.world.createBody(def).createFixture(fDef).setUserData(name);
         shape.dispose();
