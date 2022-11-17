@@ -99,8 +99,19 @@
    <ellipse/>
   </object>
   <object id="49" x="450" y="177" width="46" height="45"/>
+  <object id="65" name="Lava" x="28" y="221.334" width="942.667" height="18.6667"/>
+  <object id="66" name="Lava" x="971.997" y="-20" width="18.6667" height="260"/>
+  <object id="67" name="Lava" x="1.33334" y="-16" width="24" height="256"/>
+ </objectgroup>
+ <objectgroup id="6" name="Монетки">
+  <object id="56" name="coins" x="207.84" y="78.5213" width="16.2767" height="15.0246"/>
+  <object id="58" name="coins" x="128.961" y="67.1715" width="13.7726" height="16.2767"/>
+  <object id="59" name="coins" x="593.196" y="31.3825" width="16.2767" height="15.0246"/>
+  <object id="60" name="coins" x="495.616" y="64.3751" width="17.5287" height="17.5287"/>
+  <object id="61" name="coins" x="736.287" y="63.5779" width="16.2767" height="17.5287"/>
+  <object id="63" name="coins" x="892.388" y="80.2939" width="16.2767" height="16.2767"/>
  </objectgroup>
  <objectgroup id="5" name="Герой">
-  <object id="55" name="Hero" x="15" y="-76" width="33" height="61"/>
+  <object id="55" name="Hero" x="44.3333" y="-61.3333" width="33" height="61"/>
  </objectgroup>
 </map>

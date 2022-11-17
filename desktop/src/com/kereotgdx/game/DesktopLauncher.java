@@ -10,8 +10,7 @@ public class DesktopLauncher {
 		config.setForegroundFPS(60);
 		config.setWindowedMode(1366, 768);
 		config.setAudioConfig(32,512,9);
-		config.setTitle("KereotGDX");
-//		new Lwjgl3Application(new KereotGdxGame(), config);
+		config.setTitle("");
 		new Lwjgl3Application(new Main(), config);
 	}
 }
