@@ -33,6 +33,10 @@ public class MyAnim {
         this.time += time;
     }
 
+    public float getTime() {
+        return time;
+    }
+
     public void dispose() {
         this.img.dispose();
     }

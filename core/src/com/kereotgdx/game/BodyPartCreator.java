@@ -1,5 +1,7 @@
 package com.kereotgdx.game;
 
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.physics.box2d.*;
 
 public class BodyPartCreator {
@@ -117,7 +119,27 @@ public class BodyPartCreator {
         def.position.set(positionX/PPM, positionY/PPM);
         shape.setAsBox(shapeX/PPM, shapeY/PPM);
         fDef.shape = shape;
-        psyX.world.createBody(def).createFixture(fDef).setUserData(name);
+        Body body = psyX.world.createBody(def);
+        body.setUserData(name);
+        body.createFixture(fDef).setUserData(name);
         shape.dispose();
+    }
+    
+    public Rectangle getRectAnim(MyAnim anim, Body body) {
+        TextureRegion tr = anim.anim.getKeyFrame(anim.getTime());
+        float cx = body.getPosition().x * PPM - tr.getRegionWidth() / 2;
+        float cy = body.getPosition().y * PPM - tr.getRegionHeight() / 2;
+        float cw = tr.getRegionWidth() / PPM;
+        float ch = tr.getRegionHeight() / PPM;
+        return new Rectangle(cx, cy, cw, ch);
+    }
+
+    public Rectangle getRectAnim(MyAtlasAnim anim, Body body) {
+        TextureRegion tr = anim.anim.getKeyFrame(anim.getTime());
+        float cx = body.getPosition().x * PPM - tr.getRegionWidth() / 2;
+        float cy = body.getPosition().y * PPM - tr.getRegionHeight() / 2;
+        float cw = tr.getRegionWidth() / PPM;
+        float ch = tr.getRegionHeight() / PPM;
+        return new Rectangle(cx, cy, cw, ch);
     }
 }

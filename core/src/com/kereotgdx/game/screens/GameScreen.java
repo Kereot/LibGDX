@@ -13,6 +13,7 @@ import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
@@ -20,10 +21,11 @@ import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
-import com.kereotgdx.game.BodyPartCreator;
-import com.kereotgdx.game.MyAtlasAnim;
-import com.kereotgdx.game.MyInputProcessor;
-import com.kereotgdx.game.PsyX;
+import com.kereotgdx.game.*;
+import lombok.Setter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class GameScreen implements Screen {
     Game game;
@@ -36,7 +38,7 @@ public class GameScreen implements Screen {
     private Music music;
     private Sound sound;
     private MyInputProcessor myInputProcessor;
-    private float x, y;
+//    private float x, y;
     private final int SIR = 1; // Standard image row
     private final int SIC = 14; // Standard image column
     private final int SFPS = 15;
@@ -49,8 +51,18 @@ public class GameScreen implements Screen {
     private TiledMap map;
     private OrthogonalTiledMapRenderer mapRenderer;
     private final float MAX_VELOCITY = 0.025f;
+    private final MyAnim flagEng;
+    private int coinCount = 0;
+    private int totalCoins = 0;
+
+    public static List<Body> bodyToDelete;
+    @Setter
+    private static boolean fatality;
 
     public GameScreen(Game game) {
+        bodyToDelete = new ArrayList<>();
+        flagEng = new MyAnim("flag_eng.png", SIR, 25, SFPS, Animation.PlayMode.LOOP);
+
         this.game = game;
 
         map = new TmxMapLoader().load("map/mapd.tmx");
@@ -69,7 +81,21 @@ public class GameScreen implements Screen {
             float w = rect.get(i).getRectangle().width/2;
             float h = rect.get(i).getRectangle().height/2;
             shape = new PolygonShape();
-            bpc.createObstacle(psyX, def, fDef, shape, 1, x, y, w, h, "Obstacle");
+            String name = "Obstacle";
+            if (rect.get(i).getName() != null && rect.get(i).getName().equals("Lava")) {name = "Lava";}
+            bpc.createObstacle(psyX, def, fDef, shape, 1, x, y, w, h, name);
+        }
+
+        env = map.getLayers().get("Монетки");
+        Array<RectangleMapObject> coins = env.getObjects().getByType(RectangleMapObject.class);
+        for (int i = 0; i < coins.size; i++) {
+            float x = coins.get(i).getRectangle().width/2 + coins.get(i).getRectangle().x;
+            float y = coins.get(i).getRectangle().height/2 + coins.get(i).getRectangle().y;
+            float w = coins.get(i).getRectangle().width/2;
+            float h = coins.get(i).getRectangle().height/2;
+            shape = new PolygonShape();
+            bpc.createObstacle(psyX, def, fDef, shape, 1, x, y, w, h, "coins");
+            totalCoins++;
         }
 
         env = map.getLayers().get("Герой");
@@ -80,6 +106,7 @@ public class GameScreen implements Screen {
         float h = hero.getRectangle().height/2;
         shape = new PolygonShape();
         bodyPlayer = bpc.createBody(psyX, def, 1, 2, x, y);
+        bodyPlayer.setUserData("Hero");
         bpc.createFixture(fDef, shape, bodyPlayer, w, h, 0.015f, 0f, 0.05f, "Hero");
         bodyPlayer.setFixedRotation(true);
 
@@ -187,17 +214,57 @@ public class GameScreen implements Screen {
             fire = true;
         }
 
-        float x = (bodyPlayer.getPosition().x * bpc.PPM - 16);
-        float y = (bodyPlayer.getPosition().y * bpc.PPM - 24);
+//        float x = (bodyPlayer.getPosition().x * bpc.PPM - 16);
+//        float y = (bodyPlayer.getPosition().y * bpc.PPM - 24);
 
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
 
-        batch.draw(tmpA.draw(), x, y);
+        Rectangle heroRect = bpc.getRectAnim(tmpA, bodyPlayer);
+        if (tmpA == animEngMuscWalks) {
+            ((PolygonShape) bodyPlayer.getFixtureList().get(0).getShape()).setAsBox(heroRect.width/2, heroRect.height/2, new Vector2(0, 0.05f), 0);
+        } else if (tmpA == animEngMuscShoots) {
+            ((PolygonShape) bodyPlayer.getFixtureList().get(0).getShape()).setAsBox(heroRect.width/2, heroRect.height/2, new Vector2(0, 0.01f), 0);
+        } else {
+            ((PolygonShape) bodyPlayer.getFixtureList().get(0).getShape()).setAsBox(heroRect.width/2, heroRect.height/2);
+        }
+        batch.draw(tmpA.draw(), heroRect.x, heroRect.y, heroRect.width * bpc.PPM, heroRect.height * bpc.PPM);
+
+//        batch.draw(tmpA.draw(), x, y);
+
+        Array<Body> bodies = psyX.getBodies("coins");
+        flagEng.setTime(delta);
+        for (Body body : bodies) {
+            Rectangle coin = bpc.getRectAnim(flagEng, body);
+            ((PolygonShape) body.getFixtureList().get(0).getShape()).setAsBox(coin.width/2, coin.height/2);
+            batch.draw(flagEng.draw(), coin.x, coin.y, coin.width * bpc.PPM, coin.height * bpc.PPM);
+        }
+
         batch.end();
+
+        for (Body body : bodyToDelete) {
+            psyX.removeBody(body);
+            Gdx.graphics.setTitle(String.valueOf(++coinCount));
+        }
+        bodyToDelete.clear();
 
         psyX.step();
         psyX.debugDraw(camera);
+
+        if (coinCount == totalCoins) {
+            dispose();
+            Gdx.graphics.setTitle("WIN");
+            coinCount = 0;
+            game.setScreen(new WinScreen(game));
+        }
+
+        if (fatality) {
+            dispose();
+            fatality = false;
+            Gdx.graphics.setTitle("LOSE");
+            coinCount = 0;
+            game.setScreen(new LoseScreen(game));
+        }
     }
 
     @Override
@@ -230,7 +297,9 @@ public class GameScreen implements Screen {
         music.dispose();
         sound.dispose();
         tmpA.dispose();
+        flagEng.dispose();
         map.dispose();
         mapRenderer.dispose();
+        psyX.dispose();
     }
 }
