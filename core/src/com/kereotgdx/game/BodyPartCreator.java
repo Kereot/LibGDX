@@ -1,51 +1,12 @@
 package com.kereotgdx.game;
 
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.physics.box2d.*;
 
 public class BodyPartCreator {
     public final float PPM = 50;
-
-    public void create(
-            PsyX psyX,
-            BodyDef def,
-            FixtureDef fDef,
-            PolygonShape shape,
-            int gravityScale,
-            int type,
-            float positionX,
-            float positionY,
-            float shapeX,
-            float shapeY,
-            float density,
-            float friction,
-            float restitution,
-            String name
-    ) {
-        def.gravityScale = gravityScale;
-        switch (type) {
-            case 1:
-                def.type = BodyDef.BodyType.StaticBody;
-                break;
-            case 2:
-                def.type = BodyDef.BodyType.DynamicBody;
-                break;
-            case 3:
-                def.type = BodyDef.BodyType.KinematicBody;
-                break;
-        }
-        def.position.set(positionX/PPM, positionY/PPM);
-        shape.setAsBox(shapeX, shapeY);
-        fDef.shape = shape;
-        fDef.density = density;
-        fDef.friction = friction;
-        fDef.restitution = restitution;
-
-        psyX.world.createBody(def).createFixture(fDef).setUserData(name);
-
-        shape.dispose();
-    }
 
     public Body createBody (
             PsyX psyX,
@@ -123,6 +84,34 @@ public class BodyPartCreator {
         body.setUserData(name);
         body.createFixture(fDef).setUserData(name);
         shape.dispose();
+    }
+
+    public Fixture createDamageSensor(
+            PsyX psyX,
+            BodyDef def,
+            FixtureDef fDef,
+            PolygonShape shape,
+            float positionX,
+            float positionY,
+            float shapeX,
+            float shapeY,
+            String name
+    ) {
+        def.type = BodyDef.BodyType.StaticBody;
+        def.position.set(positionX/PPM, positionY/PPM);
+        shape.setAsBox(shapeX/PPM, shapeY/PPM);
+        fDef.shape = shape;
+        Body body = psyX.world.createBody(def);
+        body.setUserData(name);
+        body.createFixture(fDef).setUserData(name);
+        body.getFixtureList().get(0).setSensor(true);
+
+        shape.dispose();
+        return body.getFixtureList().get(0);
+    }
+
+    private float getDamage(RectangleMapObject damage) {
+        return damage.getProperties().get("damage", Integer.class);
     }
     
     public Rectangle getRectAnim(MyAnim anim, Body body) {
