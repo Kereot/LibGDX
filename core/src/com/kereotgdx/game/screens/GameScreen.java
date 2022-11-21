@@ -15,53 +15,59 @@ import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.physics.box2d.Body;
-import com.badlogic.gdx.physics.box2d.BodyDef;
-import com.badlogic.gdx.physics.box2d.FixtureDef;
-import com.badlogic.gdx.physics.box2d.PolygonShape;
+import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.kereotgdx.game.*;
 import lombok.Setter;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class GameScreen implements Screen {
     Game game;
 
     private SpriteBatch batch;
-    private MyAtlasAnim animEngMuscShoots;
-    private MyAtlasAnim animEngMuscStands;
-    private MyAtlasAnim animEngMuscWalks;
+    private final MyAtlasAnim animEngMuscShoots;
+    private final MyAtlasAnim animEngMuscStands;
+    private final MyAtlasAnim animEngMuscWalks;
     private MyAtlasAnim tmpA;
     private Music music;
     private Sound sound;
-    private MyInputProcessor myInputProcessor;
+    private final MyInputProcessor myInputProcessor;
 //    private float x, y;
     private final int SIR = 1; // Standard image row
     private final int SIC = 14; // Standard image column
     private final int SFPS = 15;
     private boolean flip;
     private boolean fire;
-    private OrthographicCamera camera;
+    private final OrthographicCamera camera;
     private PsyX psyX;
     private BodyPartCreator bpc = new BodyPartCreator();
-    private Body bodyPlayer;
+    private final Body bodyPlayer;
     private TiledMap map;
-    private OrthogonalTiledMapRenderer mapRenderer;
+    private final OrthogonalTiledMapRenderer mapRenderer;
     private final float MAX_VELOCITY = 0.025f;
     private final MyAnim flagEng;
     private int coinCount = 0;
     private int totalCoins = 0;
+    private HashMap<Fixture, Float> damageMap = new HashMap<>();
 
     public static List<Body> bodyToDelete;
     @Setter
     private static boolean fatality;
+    private final Label font;
+
+    private Stats heroStats;
 
     public GameScreen(Game game) {
+        font = new Label(15);
+
         bodyToDelete = new ArrayList<>();
         flagEng = new MyAnim("flag_eng.png", SIR, 25, SFPS, Animation.PlayMode.LOOP);
+
+        heroStats = new Stats(100f);
 
         this.game = game;
 
@@ -96,6 +102,19 @@ public class GameScreen implements Screen {
             shape = new PolygonShape();
             bpc.createObstacle(psyX, def, fDef, shape, 1, x, y, w, h, "coins");
             totalCoins++;
+        }
+
+        env = map.getLayers().get("Урон");
+        Array<RectangleMapObject> damage = env.getObjects().getByType(RectangleMapObject.class);
+        for (int i = 0; i < damage.size; i++) {
+            float x = damage.get(i).getRectangle().width/2 + damage.get(i).getRectangle().x;
+            float y = damage.get(i).getRectangle().height/2 + damage.get(i).getRectangle().y;
+            float w = damage.get(i).getRectangle().width/2;
+            float h = damage.get(i).getRectangle().height/2;
+            shape = new PolygonShape();
+            damageMap.put(
+                    bpc.createDamageSensor(psyX, def, fDef, shape, x, y, w, h, "damage"),
+                    damage.get(i).getProperties().get("damage", Float.class));
         }
 
         env = map.getLayers().get("Герой");
@@ -142,6 +161,10 @@ public class GameScreen implements Screen {
         camera.position.y = bodyPlayer.getPosition().y * bpc.PPM;
         camera.zoom = 0.5f;
         camera.update();
+
+        if (MyContactListener.isDamaged()) {
+            heroStats.getHit(damageMap.get(MyContactListener.getDamageObject()));
+        }
 
         mapRenderer.setView(camera);
         mapRenderer.render();
@@ -230,14 +253,15 @@ public class GameScreen implements Screen {
         }
         batch.draw(tmpA.draw(), heroRect.x, heroRect.y, heroRect.width * bpc.PPM, heroRect.height * bpc.PPM);
 
-//        batch.draw(tmpA.draw(), x, y);
-
         Array<Body> bodies = psyX.getBodies("coins");
         flagEng.setTime(delta);
         for (Body body : bodies) {
             Rectangle coin = bpc.getRectAnim(flagEng, body);
             ((PolygonShape) body.getFixtureList().get(0).getShape()).setAsBox(coin.width/2, coin.height/2);
             batch.draw(flagEng.draw(), coin.x, coin.y, coin.width * bpc.PPM, coin.height * bpc.PPM);
+        }
+        if (heroStats.getHitPoints() > 0.1f) {
+            font.draw(batch, "HP: " + String.format("%.1f", heroStats.getHitPoints()), heroRect.x, heroRect.y + heroRect.height * bpc.PPM);
         }
 
         batch.end();
@@ -258,11 +282,14 @@ public class GameScreen implements Screen {
             game.setScreen(new WinScreen(game));
         }
 
+        if (heroStats.getHitPoints() <= 0) {fatality = true;}
+
         if (fatality) {
-            dispose();
             fatality = false;
             Gdx.graphics.setTitle("LOSE");
             coinCount = 0;
+            MyContactListener.setDamaged(false);
+            dispose();
             game.setScreen(new LoseScreen(game));
         }
     }
@@ -301,5 +328,6 @@ public class GameScreen implements Screen {
         map.dispose();
         mapRenderer.dispose();
         psyX.dispose();
+        font.dispose();
     }
 }

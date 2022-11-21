@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.9" tiledversion="1.9.2" orientation="orthogonal" renderorder="right-down" width="62" height="15" tilewidth="16" tileheight="16" infinite="0" nextlayerid="6" nextobjectid="56">
+<map version="1.9" tiledversion="1.9.2" orientation="orthogonal" renderorder="right-down" width="62" height="15" tilewidth="16" tileheight="16" infinite="0" nextlayerid="8" nextobjectid="70">
  <tileset firstgid="1" name="dirt-tiles" tilewidth="16" tileheight="16" tilecount="384" columns="24">
   <image source="dirt-tiles.png" width="384" height="256"/>
  </tileset>
@@ -22,7 +22,7 @@
   </data>
  </layer>
  <objectgroup id="4" name="Препятствия">
-  <object id="2" x="114" y="2" width="45" height="31"/>
+  <object id="2" x="113.5" y="2" width="45" height="31"/>
   <object id="3" x="528" y="1" width="46" height="14"/>
   <object id="4" x="1" y="117" width="190" height="29"/>
   <object id="5" x="241" y="118" width="238" height="25"/>
@@ -34,21 +34,6 @@
   <object id="12" x="945" y="85" width="45" height="26"/>
   <object id="17" x="896" y="133">
    <polygon points="0,0 48,-49 47,9 32,10"/>
-  </object>
-  <object id="18" name="St_1" class="Bad" x="754" y="34">
-   <polygon points="0,0 8,24 16,7 21,15 29,-1"/>
-  </object>
-  <object id="19" name="Pikes_2" class="Bad" x="530" y="16">
-   <polygon points="0,0 6,12 12,5 15,11 18,7 22,11 28,6 30,12 34,7 37,10 45,0"/>
-  </object>
-  <object id="22" x="345" y="103">
-   <polygon points="0,0 -13,15 11,15"/>
-  </object>
-  <object id="23" name="Pikes_1" class="Bad" x="114" y="33">
-   <polygon points="0,0 7,12 11,5 15,12 19,5 24,13 27,6 31,12 34,6 39,13 45,1"/>
-  </object>
-  <object id="24" x="795" y="133">
-   <polygon points="0,0 15,-14 20,-4 31,-15 40,-3 40,0"/>
   </object>
   <object id="26" x="24" y="202" width="15" height="14">
    <ellipse/>
@@ -113,5 +98,67 @@
  </objectgroup>
  <objectgroup id="5" name="Герой">
   <object id="55" name="Hero" x="44.3333" y="-61.3333" width="33" height="61"/>
+ </objectgroup>
+ <objectgroup id="7" name="Урон">
+  <object id="56" x="338.5" y="104.333" width="12.6667" height="13.3333">
+   <properties>
+    <property name="damage" type="float" value="0.1"/>
+   </properties>
+  </object>
+  <object id="57" x="804.667" y="119.333" width="11.1667" height="13.3333">
+   <properties>
+    <property name="damage" type="float" value="0.1"/>
+   </properties>
+  </object>
+  <object id="58" x="819.167" y="119.333" width="10.6667" height="13.3333">
+   <properties>
+    <property name="damage" type="float" value="0.1"/>
+   </properties>
+  </object>
+  <object id="59" x="756.5" y="32" width="8.1667" height="8.59648">
+   <properties>
+    <property name="damage" type="float" value="0.5"/>
+   </properties>
+  </object>
+  <object id="61" x="765.5" y="32" width="8.1667" height="8.59648">
+   <properties>
+    <property name="damage" type="float" value="0.5"/>
+   </properties>
+  </object>
+  <object id="62" x="773.917" y="31.7018" width="8.1667" height="8.59648">
+   <properties>
+    <property name="damage" type="float" value="0.5"/>
+   </properties>
+  </object>
+  <object id="63" x="759.417" y="40.7018" width="8.1667" height="8.59648">
+   <properties>
+    <property name="damage" type="float" value="0.5"/>
+   </properties>
+  </object>
+  <object id="64" x="759.917" y="50.7018" width="8.1667" height="8.59648">
+   <properties>
+    <property name="damage" type="float" value="0.5"/>
+   </properties>
+  </object>
+  <object id="65" x="772.917" y="41.7018" width="8.1667" height="8.59648">
+   <properties>
+    <property name="damage" type="float" value="0.5"/>
+   </properties>
+  </object>
+  <object id="66" x="529.917" y="16.7018" width="40.6667" height="11.0965">
+   <properties>
+    <property name="damage" type="float" value="1.5"/>
+   </properties>
+  </object>
+  <object id="68" x="115.167" y="33.9518" width="40.6667" height="11.0965">
+   <properties>
+    <property name="damage" type="float" value="1.5"/>
+   </properties>
+  </object>
+  <object id="69" x="834.917" y="72.8333" width="11.1667" height="7.8333">
+   <properties>
+    <property name="damage" type="float" value="0.2"/>
+   </properties>
+  </object>
  </objectgroup>
 </map>
