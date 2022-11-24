@@ -19,10 +19,13 @@ import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.kereotgdx.game.*;
+import lombok.Getter;
 import lombok.Setter;
+import org.w3c.dom.css.Rect;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 public class GameScreen implements Screen {
@@ -36,9 +39,7 @@ public class GameScreen implements Screen {
     private Music music;
     private Sound sound;
     private final MyInputProcessor myInputProcessor;
-//    private float x, y;
     private final int SIR = 1; // Standard image row
-    private final int SIC = 14; // Standard image column
     private final int SFPS = 15;
     private boolean flip;
     private boolean fire;
@@ -46,6 +47,7 @@ public class GameScreen implements Screen {
     private PsyX psyX;
     private BodyPartCreator bpc = new BodyPartCreator();
     private final Body bodyPlayer;
+    private List<Enemy> enemiesList = new ArrayList<>();
     private TiledMap map;
     private final OrthogonalTiledMapRenderer mapRenderer;
     private final float MAX_VELOCITY = 0.025f;
@@ -55,6 +57,9 @@ public class GameScreen implements Screen {
     private HashMap<Fixture, Float> damageMap = new HashMap<>();
 
     public static List<Body> bodyToDelete;
+    public Bullet bullet;
+//    public Enemy enemy;
+    public static List<Bullet> bullets;
     @Setter
     private static boolean fatality;
     private final Label font;
@@ -65,6 +70,7 @@ public class GameScreen implements Screen {
         font = new Label(15);
 
         bodyToDelete = new ArrayList<>();
+        bullets = new ArrayList<>();
         flagEng = new MyAnim("flag_eng.png", SIR, 25, SFPS, Animation.PlayMode.LOOP);
 
         heroStats = new Stats(100f);
@@ -117,6 +123,16 @@ public class GameScreen implements Screen {
                     damage.get(i).getProperties().get("damage", Float.class));
         }
 
+        env = map.getLayers().get("Враги");
+        Array<RectangleMapObject> enemies = env.getObjects().getByType(RectangleMapObject.class);
+        for (int i = 0; i < enemies.size; i++) {
+            float x = enemies.get(i).getRectangle().width / 2 + enemies.get(i).getRectangle().x;
+            float y = enemies.get(i).getRectangle().height / 2 + enemies.get(i).getRectangle().y;
+            float w = enemies.get(i).getRectangle().width / 2;
+            float h = enemies.get(i).getRectangle().height / 2;
+            enemiesList.add(new Enemy(psyX, x, y, w, h));
+        }
+
         env = map.getLayers().get("Герой");
         RectangleMapObject hero = (RectangleMapObject) env.getObjects().get("Hero");
         float x = hero.getRectangle().width/2 + hero.getRectangle().x;
@@ -128,6 +144,7 @@ public class GameScreen implements Screen {
         bodyPlayer.setUserData("Hero");
         bpc.createFixture(fDef, shape, bodyPlayer, w, h, 0.015f, 0f, 0.05f, "Hero");
         bodyPlayer.setFixedRotation(true);
+
 
         myInputProcessor = new MyInputProcessor();
         Gdx.input.setInputProcessor(myInputProcessor);
@@ -141,9 +158,9 @@ public class GameScreen implements Screen {
 
         sound = Gdx.audio.newSound(Gdx.files.internal("land_musket1.wav"));
 
-        animEngMuscShoots = new MyAtlasAnim("ENG_MUSC.atlas","ENG_MUSC_FIRE_RIGHT", SIR, SIC, SFPS, Animation.PlayMode.NORMAL);
-        animEngMuscStands = new MyAtlasAnim("ENG_MUSC.atlas","ENG_MUSC_STAND", SIR, SIC, SFPS, Animation.PlayMode.LOOP);
-        animEngMuscWalks = new MyAtlasAnim("ENG_MUSC.atlas", "ENG_MUSC_WALK_RIGHT", SIR, SIC, SFPS, Animation.PlayMode.LOOP);
+        animEngMuscShoots = new MyAtlasAnim("ENG_MUSC.atlas","ENG_MUSC_FIRE_RIGHT", SIR, 14, SFPS, Animation.PlayMode.NORMAL);
+        animEngMuscStands = new MyAtlasAnim("ENG_MUSC.atlas","ENG_MUSC_STAND", SIR, 14, SFPS, Animation.PlayMode.LOOP);
+        animEngMuscWalks = new MyAtlasAnim("ENG_MUSC.atlas", "ENG_MUSC_WALK_RIGHT", SIR, 14, SFPS, Animation.PlayMode.LOOP);
 
         camera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
     }
@@ -195,9 +212,9 @@ public class GameScreen implements Screen {
             if (myInputProcessor.getOutString().contains("W") && vel.y == 0) {
                 bodyPlayer.applyLinearImpulse(0, 0.05f, pos.x, pos.y, true);
             }
-            if (myInputProcessor.getOutString().contains("S")) {
-//				bodyPlayer.setLinearVelocity(new Vector2(0, 0));
-            }
+//            if (myInputProcessor.getOutString().contains("S")) {
+////				bodyPlayer.setLinearVelocity(new Vector2(0, 0));
+//            }
             if (myInputProcessor.getOutString().contains("Space") && vel.y == 0) {
                 bodyPlayer.setLinearVelocity(new Vector2(0, 5f));
             }
@@ -226,6 +243,7 @@ public class GameScreen implements Screen {
             }
         }
 
+        Rectangle heroRect = bpc.getRectAnim(tmpA, bodyPlayer);
 
         if (Gdx.input.isButtonJustPressed(0)
                 && myInputProcessor.getOutString().isEmpty()
@@ -234,16 +252,30 @@ public class GameScreen implements Screen {
             sound.play(0.025f);
             tmpA = animEngMuscShoots;
             tmpA.resetTime();
+            if (!flip) {
+                bullet = new Bullet(psyX, bodyPlayer.getPosition().x + heroRect.width, bodyPlayer.getPosition().y, flip);
+                bullets.add(bullet);
+            } else {
+                bullet = new Bullet(psyX, bodyPlayer.getPosition().x - heroRect.width, bodyPlayer.getPosition().y, flip);
+                bullets.add(bullet);
+            }
+
             fire = true;
         }
 
-//        float x = (bodyPlayer.getPosition().x * bpc.PPM - 16);
-//        float y = (bodyPlayer.getPosition().y * bpc.PPM - 24);
+//        ArrayList<Bullet> bTmp = new ArrayList<>();
+//        for (Bullet b: bullets) {
+//            Body tB = b.update(delta);
+//            if (tB != null) {
+//                bodyToDelete.add(tB);
+//                bTmp.add(b);
+//            }
+//        }
+//        bullets.removeAll(bTmp);
 
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
 
-        Rectangle heroRect = bpc.getRectAnim(tmpA, bodyPlayer);
         if (tmpA == animEngMuscWalks) {
             ((PolygonShape) bodyPlayer.getFixtureList().get(0).getShape()).setAsBox(heroRect.width/2, heroRect.height/2, new Vector2(0, 0.05f), 0);
         } else if (tmpA == animEngMuscShoots) {
@@ -255,20 +287,53 @@ public class GameScreen implements Screen {
 
         Array<Body> bodies = psyX.getBodies("coins");
         flagEng.setTime(delta);
-        for (Body body : bodies) {
+        for (Array.ArrayIterator<Body> iterator = new Array.ArrayIterator<>(bodies); iterator.hasNext(); ) {
+            Body body = iterator.next();
             Rectangle coin = bpc.getRectAnim(flagEng, body);
-            ((PolygonShape) body.getFixtureList().get(0).getShape()).setAsBox(coin.width/2, coin.height/2);
+            ((PolygonShape) body.getFixtureList().get(0).getShape()).setAsBox(coin.width / 2, coin.height / 2);
             batch.draw(flagEng.draw(), coin.x, coin.y, coin.width * bpc.PPM, coin.height * bpc.PPM);
         }
         if (heroStats.getHitPoints() > 0.1f) {
             font.draw(batch, "HP: " + String.format("%.1f", heroStats.getHitPoints()), heroRect.x, heroRect.y + heroRect.height * bpc.PPM);
         }
 
+        Array<Body> bulletArray = psyX.getBodies("bullet");
+        for (Array.ArrayIterator<Body> iterator = new Array.ArrayIterator<>(bulletArray); iterator.hasNext(); ) {
+            Body body = iterator.next();
+            Rectangle bulletRect = bullet.getRectBullet(body);
+            ((PolygonShape) body.getFixtureList().get(0).getShape()).setAsBox(bulletRect.width / 2, bulletRect.height / 2);
+            if (body.getLinearVelocity().x > 0) {
+                batch.draw(bullet.getTEXTURE(), bulletRect.x, bulletRect.y, bulletRect.width * bpc.PPM, bulletRect.height * bpc.PPM);
+            } else {
+                batch.draw(bullet.getTEXTURE(), bulletRect.x, bulletRect.y, bulletRect.width * bpc.PPM, bulletRect.height * bpc.PPM,
+                        0, 0, bullet.getTEXTURE().getWidth(), bullet.getTEXTURE().getHeight(), true, false);
+            }
+        }
+
+//        Array<Body> enemiesArray = psyX.getBodies("enemy");
+//        for (Array.ArrayIterator<Body> iterator = new Array.ArrayIterator<>(enemiesArray); iterator.hasNext(); ) {
+//            Body body = iterator.next();
+            for (Enemy enemy : enemiesList) {
+                Rectangle enemyRect = enemy.getRectEnemy();
+                ((PolygonShape) enemy.getBody().getFixtureList().get(0).getShape()).setAsBox(enemyRect.width / 2, enemyRect.height / 2);
+                enemy.getTmpA().setTime(Gdx.graphics.getDeltaTime());
+                enemy.flipMe();
+                batch.draw(enemy.getTmpA().draw(), enemyRect.x, enemyRect.y, enemyRect.width * bpc.PPM, enemyRect.height * bpc.PPM);
+            }
+//        }
+
         batch.end();
 
         for (Body body : bodyToDelete) {
+            if (body.getUserData() != null && body.getUserData().equals("coins"))
+                Gdx.graphics.setTitle(String.valueOf(++coinCount));
+            if (body.getUserData() != null && body.getUserData().equals("enemy")) {
+                for (Iterator<Enemy> iterator = enemiesList.iterator(); iterator.hasNext();) {
+                    Enemy enemy = iterator.next();
+                    if (enemy.getBody() == body) iterator.remove();
+                }
+            }
             psyX.removeBody(body);
-            Gdx.graphics.setTitle(String.valueOf(++coinCount));
         }
         bodyToDelete.clear();
 
@@ -329,5 +394,7 @@ public class GameScreen implements Screen {
         mapRenderer.dispose();
         psyX.dispose();
         font.dispose();
+        bullet.dispose();
+//        enemy.dispose();
     }
 }

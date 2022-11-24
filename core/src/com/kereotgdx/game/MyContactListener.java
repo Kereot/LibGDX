@@ -38,6 +38,30 @@ public class MyContactListener implements ContactListener {
             isDamaged = true;
             damageObject = a;
         }
+
+        if (a.getUserData().equals("bullet")
+                && b.getUserData().equals("enemy")) {
+            GameScreen.bodyToDelete.add(a.getBody());
+            GameScreen.bodyToDelete.add(b.getBody());
+        }
+        if (b.getUserData().equals("bullet")
+                && a.getUserData().equals("enemy")) {
+            GameScreen.bodyToDelete.add(a.getBody());
+            GameScreen.bodyToDelete.add(b.getBody());
+        }
+
+        if (a.getUserData().equals("bullet")
+                && !b.getUserData().equals("Hero")
+                && !b.getUserData().equals("coins")
+                && !b.getUserData().equals("bullet")) {
+            GameScreen.bodyToDelete.add(a.getBody());
+        }
+        if (b.getUserData().equals("bullet")
+                && !a.getUserData().equals("Hero")
+                && !a.getUserData().equals("coins")
+                && !a.getUserData().equals("bullet")) {
+            GameScreen.bodyToDelete.add(b.getBody());
+        }
     }
 
     @Override
