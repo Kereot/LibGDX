@@ -1,7 +1,6 @@
 package com.kereotgdx.game;
 
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.physics.box2d.*;
 
@@ -110,8 +109,43 @@ public class BodyPartCreator {
         return body.getFixtureList().get(0);
     }
 
-    private float getDamage(RectangleMapObject damage) {
-        return damage.getProperties().get("damage", Integer.class);
+    public Body addBullet(PsyX psyx, float x, float y, Bullet bullet) {
+        BodyDef def = new BodyDef();
+        FixtureDef fDef = new FixtureDef();
+        PolygonShape polygonShape = new PolygonShape();
+        def.type = BodyDef.BodyType.DynamicBody;
+        def.position.set(x, y);
+        polygonShape.setAsBox(bullet.getTEXTURE().getWidth()/PPM, bullet.getTEXTURE().getHeight()/PPM);
+        fDef.shape = polygonShape;
+        String name = "bullet";
+        Body body = psyx.world.createBody(def);
+        body.setGravityScale(0);
+        body.setBullet(true);
+        body.setUserData(name);
+        body.createFixture(fDef).setUserData(name);
+        body.getFixtureList().get(0).setSensor(true);
+        polygonShape.dispose();
+        return body;
+    }
+
+    public Body addEnemy(PsyX psyx, float x, float y, float w, float h) {
+        BodyDef def = new BodyDef();
+        FixtureDef fDef = new FixtureDef();
+        PolygonShape polygonShape = new PolygonShape();
+        def.type = BodyDef.BodyType.DynamicBody;
+        def.position.set(x/PPM, y/PPM);
+        polygonShape.setAsBox(w/PPM, h/PPM);
+        fDef.shape = polygonShape;
+        fDef.density = 0.010f;
+        fDef.friction = 0f;
+        fDef.restitution = 0f;
+        String name = "enemy";
+        Body body = psyx.world.createBody(def);
+        body.setGravityScale(1);
+        body.setUserData(name);
+        body.createFixture(fDef).setUserData(name);
+        polygonShape.dispose();
+        return body;
     }
     
     public Rectangle getRectAnim(MyAnim anim, Body body) {

@@ -1,0 +1,34 @@
+
+FRA_KNIGHT.png
+size: 2048, 256
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+FRA_KNIGHT_FIRE_RIGHT
+  rotate: false
+  xy: 2, 91
+  size: 1920, 66
+  orig: 1920, 66
+  offset: 0, 0
+  index: -1
+FRA_KNIGHT_WALK_RIGHT
+  rotate: false
+  xy: 2, 29
+  size: 936, 60
+  orig: 936, 60
+  offset: 0, 0
+  index: -1
+cross
+  rotate: false
+  xy: 2, 2
+  size: 240, 25
+  orig: 240, 25
+  offset: 0, 0
+  index: -1
+tower
+  rotate: false
+  xy: 1924, 97
+  size: 48, 60
+  orig: 48, 60
+  offset: 0, 0
+  index: -1
