@@ -10,18 +10,14 @@ public class MyContactListener implements ContactListener {
     @Setter
     private static boolean isDamaged;
     @Getter
+    @Setter
+    private static boolean isEngaged;
+    @Getter
     private static Fixture damageObject;
     @Override
     public void beginContact(Contact contact) {
         Fixture a = contact.getFixtureA();
         Fixture b = contact.getFixtureB();
-
-        if (a.getUserData().equals("Hero") && b.getUserData().equals("coins")) {
-            GameScreen.bodyToDelete.add(b.getBody());
-        }
-        if (b.getUserData().equals("Hero") && a.getUserData().equals("coins")) {
-            GameScreen.bodyToDelete.add(a.getBody());
-        }
 
         if (a.getUserData().equals("Hero") && b.getUserData().equals("Lava")) {
             GameScreen.setFatality(true);
@@ -75,11 +71,39 @@ public class MyContactListener implements ContactListener {
         if (b.getUserData().equals("Hero") && a.getUserData().equals("damage")) {
             isDamaged = false;
         }
+
+        if (a.getUserData().equals("Hero") && b.getUserData().equals("enemy")) {
+            isEngaged = false;
+            GameScreen.engagedEnemies.remove(b.getBody());
+        }
+        if (b.getUserData().equals("Hero") && a.getUserData().equals("enemy")) {
+            isEngaged = false;
+            GameScreen.engagedEnemies.remove(a.getBody());
+        }
     }
 
     @Override
     public void preSolve(Contact contact, Manifold oldManifold) {
+        Fixture a = contact.getFixtureA();
+        Fixture b = contact.getFixtureB();
 
+        if (a.getUserData().equals("Hero") && b.getUserData().equals("coins")) {
+            GameScreen.bodyToDelete.add(b.getBody());
+        }
+        if (b.getUserData().equals("Hero") && a.getUserData().equals("coins")) {
+            GameScreen.bodyToDelete.add(a.getBody());
+        }
+
+        if (a.getUserData().equals("Hero") && b.getUserData().equals("enemy")) {
+            isEngaged = true;
+            contact.setEnabled(false);
+            GameScreen.engagedEnemies.add(b.getBody());
+        }
+        if (b.getUserData().equals("Hero") && a.getUserData().equals("enemy")) {
+            isEngaged = true;
+            contact.setEnabled(false);
+            GameScreen.engagedEnemies.add(a.getBody());
+        }
     }
 
     @Override

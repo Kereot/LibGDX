@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.maps.MapLayer;
+import com.badlogic.gdx.maps.objects.PolylineMapObject;
 import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
@@ -19,9 +20,7 @@ import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.kereotgdx.game.*;
-import lombok.Getter;
 import lombok.Setter;
-import org.w3c.dom.css.Rect;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,7 +36,8 @@ public class GameScreen implements Screen {
     private final MyAtlasAnim animEngMuscWalks;
     private MyAtlasAnim tmpA;
     private Music music;
-    private Sound sound;
+    private Sound heroShootSound;
+    private Music enemySwingSound;
     private final MyInputProcessor myInputProcessor;
     private final int SIR = 1; // Standard image row
     private final int SFPS = 15;
@@ -57,7 +57,9 @@ public class GameScreen implements Screen {
     private HashMap<Fixture, Float> damageMap = new HashMap<>();
 
     public static List<Body> bodyToDelete;
+    public static List<Body> engagedEnemies = new ArrayList<>();
     public Bullet bullet;
+    public Tower tower;
 //    public Enemy enemy;
     public static List<Bullet> bullets;
     @Setter
@@ -84,6 +86,7 @@ public class GameScreen implements Screen {
         BodyDef def = new BodyDef();
         FixtureDef fDef = new FixtureDef();
         PolygonShape shape;
+        ChainShape chainShape;
 
         MapLayer env = map.getLayers().get("Препятствия");
         Array<RectangleMapObject> rect = env.getObjects().getByType(RectangleMapObject.class);
@@ -95,7 +98,27 @@ public class GameScreen implements Screen {
             shape = new PolygonShape();
             String name = "Obstacle";
             if (rect.get(i).getName() != null && rect.get(i).getName().equals("Lava")) {name = "Lava";}
-            bpc.createObstacle(psyX, def, fDef, shape, 1, x, y, w, h, name);
+            if (rect.get(i).getName() != null && rect.get(i).getName().equals("stop")) {
+                bpc.createObstacle(psyX, def, fDef, shape, 1, x, y, w, h, name, Types.STOP, Types.MASK_STOP);
+            } else if (rect.get(i).getName() != null && rect.get(i).getName().equals("Tower")) {
+                tower = new Tower(psyX, x, y);
+            } else {
+                bpc.createObstacle(psyX, def, fDef, shape, 1, x, y, w, h, name, Types.SCENERY, Types.MASK_SCENERY);
+            }
+        }
+
+        Array<PolylineMapObject> line = env.getObjects().getByType(PolylineMapObject.class);
+        for (int i = 0; i < line.size; i++) {
+            def = new BodyDef();
+            float[] tf = line.get(i).getPolyline().getTransformedVertices();
+            for (int j = 0; j < tf.length; j++) {
+                tf[j] /= bpc.PPM;
+            }
+            chainShape = new ChainShape();
+            chainShape.createChain(tf);
+            String name = "Obstacle";
+            if (line.get(i).getName() != null && line.get(i).getName().equals("Lava")) {name = "Lava";}
+            bpc.createAngledObstacle(psyX, def, fDef, chainShape, 1, name);
         }
 
         env = map.getLayers().get("Монетки");
@@ -106,7 +129,7 @@ public class GameScreen implements Screen {
             float w = coins.get(i).getRectangle().width/2;
             float h = coins.get(i).getRectangle().height/2;
             shape = new PolygonShape();
-            bpc.createObstacle(psyX, def, fDef, shape, 1, x, y, w, h, "coins");
+            bpc.createObstacle(psyX, def, fDef, shape, 1, x, y, w, h, "coins", Types.COIN, Types.MASK_COIN);
             totalCoins++;
         }
 
@@ -142,7 +165,7 @@ public class GameScreen implements Screen {
         shape = new PolygonShape();
         bodyPlayer = bpc.createBody(psyX, def, 1, 2, x, y);
         bodyPlayer.setUserData("Hero");
-        bpc.createFixture(fDef, shape, bodyPlayer, w, h, 0.015f, 0f, 0.05f, "Hero");
+        bpc.createFixture(fDef, shape, bodyPlayer, w, h, 0.015f, 0f, 0.05f, "Hero", Types.HERO, Types.MASK_HERO);
         bodyPlayer.setFixedRotation(true);
 
 
@@ -156,7 +179,8 @@ public class GameScreen implements Screen {
         music.setLooping(true);
         music.play();
 
-        sound = Gdx.audio.newSound(Gdx.files.internal("land_musket1.wav"));
+        heroShootSound = Gdx.audio.newSound(Gdx.files.internal("land_musket1.wav"));
+        enemySwingSound = Gdx.audio.newMusic(Gdx.files.internal("land_sword2.wav"));
 
         animEngMuscShoots = new MyAtlasAnim("ENG_MUSC.atlas","ENG_MUSC_FIRE_RIGHT", SIR, 14, SFPS, Animation.PlayMode.NORMAL);
         animEngMuscStands = new MyAtlasAnim("ENG_MUSC.atlas","ENG_MUSC_STAND", SIR, 14, SFPS, Animation.PlayMode.LOOP);
@@ -181,6 +205,33 @@ public class GameScreen implements Screen {
 
         if (MyContactListener.isDamaged()) {
             heroStats.getHit(damageMap.get(MyContactListener.getDamageObject()));
+        }
+
+        if (MyContactListener.isEngaged()) {
+            heroStats.getHit(1.5f);
+            for (Enemy enemy : enemiesList) {
+                for (Body engagedEnemy : engagedEnemies) {
+                    if (engagedEnemy.equals(enemy.getBody())) {
+                        enemy.engage();
+                        if (!enemySwingSound.isPlaying()) {
+                            enemySwingSound.setVolume(0.025f);
+                            enemySwingSound.setLooping(false);
+                            enemySwingSound.play();
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!MyContactListener.isEngaged()) {
+            for (Enemy enemy : enemiesList) {
+                for (Body engagedEnemy : engagedEnemies) {
+                    if (engagedEnemy.equals(enemy.getBody())
+                            && enemy.getTmpA().getAnim().isAnimationFinished(enemy.getTmpA().getTime())) {
+                        enemy.disengage();
+                    }
+                }
+            }
         }
 
         mapRenderer.setView(camera);
@@ -249,7 +300,7 @@ public class GameScreen implements Screen {
                 && myInputProcessor.getOutString().isEmpty()
                 && !fire
                 && vel.y == 0) {
-            sound.play(0.025f);
+            heroShootSound.play(0.025f);
             tmpA = animEngMuscShoots;
             tmpA.resetTime();
             if (!flip) {
@@ -310,19 +361,25 @@ public class GameScreen implements Screen {
             }
         }
 
-//        Array<Body> enemiesArray = psyX.getBodies("enemy");
-//        for (Array.ArrayIterator<Body> iterator = new Array.ArrayIterator<>(enemiesArray); iterator.hasNext(); ) {
-//            Body body = iterator.next();
-            for (Enemy enemy : enemiesList) {
-                Rectangle enemyRect = enemy.getRectEnemy();
-                ((PolygonShape) enemy.getBody().getFixtureList().get(0).getShape()).setAsBox(enemyRect.width / 2, enemyRect.height / 2);
-                enemy.getTmpA().setTime(Gdx.graphics.getDeltaTime());
-                enemy.flipMe();
-                batch.draw(enemy.getTmpA().draw(), enemyRect.x, enemyRect.y, enemyRect.width * bpc.PPM, enemyRect.height * bpc.PPM);
-            }
-//        }
+        Array<Body> towerArray = psyX.getBodies("Tower");
+        for (Array.ArrayIterator<Body> iterator = new Array.ArrayIterator<>(towerArray); iterator.hasNext(); ) {
+            Body body = iterator.next();
+            Rectangle towerRect = tower.getRectTower(body);
+            ((PolygonShape) body.getFixtureList().get(0).getShape()).setAsBox(towerRect.width / 2, towerRect.height / 2);
+            batch.draw(tower.getTEXTURE(), towerRect.x, towerRect.y, towerRect.width * bpc.PPM, towerRect.height * bpc.PPM);
+        }
+
+        for (Enemy enemy : enemiesList) {
+            Rectangle enemyRect = enemy.getRectEnemy();
+            ((PolygonShape) enemy.getBody().getFixtureList().get(0).getShape()).setAsBox(enemyRect.width / 2, enemyRect.height / 2);
+            enemy.getTmpA().setTime(Gdx.graphics.getDeltaTime());
+            enemy.flipMe();
+            batch.draw(enemy.getTmpA().draw(), enemyRect.x, enemyRect.y, enemyRect.width * bpc.PPM, enemyRect.height * bpc.PPM);
+        }
 
         batch.end();
+
+        psyX.step();
 
         for (Body body : bodyToDelete) {
             if (body.getUserData() != null && body.getUserData().equals("coins"))
@@ -337,7 +394,6 @@ public class GameScreen implements Screen {
         }
         bodyToDelete.clear();
 
-        psyX.step();
         psyX.debugDraw(camera);
 
         if (coinCount == totalCoins) {
@@ -354,6 +410,7 @@ public class GameScreen implements Screen {
             Gdx.graphics.setTitle("LOSE");
             coinCount = 0;
             MyContactListener.setDamaged(false);
+            MyContactListener.setEngaged(false);
             dispose();
             game.setScreen(new LoseScreen(game));
         }
@@ -387,14 +444,16 @@ public class GameScreen implements Screen {
         animEngMuscWalks.dispose();
         animEngMuscStands.dispose();
         music.dispose();
-        sound.dispose();
+        heroShootSound.dispose();
+        enemySwingSound.dispose();
         tmpA.dispose();
         flagEng.dispose();
+        tower.dispose();
         map.dispose();
         mapRenderer.dispose();
         psyX.dispose();
         font.dispose();
-        bullet.dispose();
+        if (bullet != null) bullet.dispose();
 //        enemy.dispose();
     }
 }
