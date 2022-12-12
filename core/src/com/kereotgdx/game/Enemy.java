@@ -4,11 +4,7 @@ import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.physics.box2d.Body;
-import com.badlogic.gdx.physics.box2d.BodyDef;
-import com.badlogic.gdx.physics.box2d.FixtureDef;
-import com.badlogic.gdx.physics.box2d.PolygonShape;
-import com.kereotgdx.game.screens.GameScreen;
+import com.badlogic.gdx.physics.box2d.Body;;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -33,6 +29,14 @@ public class Enemy {
 
         animFraKnightShoots = new MyAtlasAnim("FRA_KNIGHT.atlas", "FRA_KNIGHT_FIRE_RIGHT",SIR, 20, SFPS, Animation.PlayMode.NORMAL);
         animFraKnightWalks = new MyAtlasAnim("FRA_KNIGHT.atlas", "FRA_KNIGHT_WALK_RIGHT", SIR, 18, SFPS, Animation.PlayMode.LOOP);
+        tmpA = animFraKnightWalks;
+    }
+
+    public void engage() {
+        tmpA = animFraKnightShoots;
+    }
+
+    public void disengage() {
         tmpA = animFraKnightWalks;
     }
 
